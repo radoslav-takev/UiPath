@@ -1,0 +1,466 @@
+<style>
+  :root{
+    --navy:#1B2A41; --navy2:#2E5C8A; --bg:#F4F6F8; --card:#FFFFFF;
+    --border:#E1E5EA; --text:#1A1A1A; --muted:#6B7280;
+    --green:#1F7A5C; --greenbg:#E6F2ED;
+    --amber:#B36B00; --amberbg:#FBF0E1;
+    --gray:#595959; --graybg:#EDEDED;
+    --red:#B23A2E; --redbg:#FBEAE8;
+    --blue:#2E5C8A; --bluebg:#EAF1F8;
+    --purple:#6A3D9A; --purplebg:#F1EAF8;
+  }
+  *{box-sizing:border-box;}
+  body,.app{font-family:Arial,Helvetica,sans-serif;color:var(--text);}
+  .app{background:var(--bg);border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+  .topbar{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .topbar h1{font-size:16px;font-weight:700;margin:0;flex:0 0 auto;white-space:nowrap;}
+  .tabs{display:flex;gap:4px;flex:1;flex-wrap:wrap;}
+  .tab{background:transparent;border:none;color:#C9D6E3;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;}
+  .tab:hover{background:rgba(255,255,255,0.08);}
+  .tab.active{background:#fff;color:var(--navy);}
+  .topbar-actions{display:flex;gap:8px;align-items:center;margin-left:auto;}
+  .search{padding:7px 10px;border-radius:6px;border:1px solid #33465F;background:#243B54;color:#fff;font-size:13px;width:180px;}
+  .search::placeholder{color:#93A6BB;}
+  .btn{padding:8px 14px;border-radius:6px;border:none;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn-primary{background:#fff;color:var(--navy);}
+  .btn-primary:hover{background:#EAF1F8;}
+  .content{padding:20px;min-height:400px;}
+  .empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;}
+  .empty b{display:block;color:var(--text);font-size:15px;margin-bottom:6px;}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+  .metric{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .metric .num{font-size:26px;font-weight:700;color:var(--navy2);}
+  .metric .lbl{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;}
+  .panel h3{font-size:14px;margin:0 0 12px;color:var(--navy);}
+  .barrow{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px;}
+  .barrow .lbl{width:150px;color:var(--muted);flex-shrink:0;}
+  .barrow .track{flex:1;background:var(--bg);border-radius:4px;height:16px;overflow:hidden;}
+  .barrow .fill{background:var(--navy2);height:100%;border-radius:4px;}
+  .barrow .count{width:24px;text-align:right;font-weight:700;color:var(--navy);}
+
+  .board{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;}
+  .column{background:var(--card);border:1px solid var(--border);border-radius:10px;min-width:220px;max-width:220px;flex:0 0 auto;}
+  .column-head{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--navy);display:flex;justify-content:space-between;}
+  .column-body{padding:8px;display:flex;flex-direction:column;gap:8px;min-height:60px;}
+  .card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;}
+  .card:hover{border-color:var(--navy2);}
+  .card .pid{font-size:11px;color:var(--muted);font-weight:700;}
+  .card .name{font-size:13px;font-weight:700;margin:2px 0 6px;}
+  .card .meta{display:flex;flex-wrap:wrap;gap:4px;}
+  .badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;}
+  .badge-high{background:var(--redbg);color:var(--red);}
+  .badge-medium{background:var(--amberbg);color:var(--amber);}
+  .badge-low{background:var(--graybg);color:var(--gray);}
+  .tag{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bluebg);color:var(--navy2);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;font-size:11px;position:sticky;top:0;}
+  td{padding:8px 10px;border-bottom:1px solid var(--border);}
+  tr.row:hover{background:var(--bg);cursor:pointer;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;}
+  .status-pill{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:700;display:inline-block;white-space:nowrap;}
+
+  .matrix-x{color:var(--navy2);font-weight:700;text-align:center;}
+  .matrix-cell{text-align:center;}
+
+  .overlay{position:fixed;inset:0;background:rgba(20,30,45,0.5);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50;}
+  .modal{background:#fff;border-radius:12px;width:100%;max-width:640px;padding:0;}
+  .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-head h2{font-size:16px;margin:0;color:var(--navy);}
+  .modal-body{padding:20px;max-height:70vh;overflow-y:auto;}
+  .modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field.full{grid-column:1/-1;}
+  .field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;}
+  .field input,.field select,.field textarea{padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;}
+  .field textarea{resize:vertical;min-height:50px;}
+  .checks{display:flex;flex-wrap:wrap;gap:10px;}
+  .check{display:flex;align-items:center;gap:5px;font-size:12px;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-danger{background:var(--redbg);color:var(--red);}
+  .btn-save{background:var(--navy2);color:#fff;}
+  .x-close{background:transparent;border:none;font-size:18px;cursor:pointer;color:var(--muted);}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:60;}
+  .filterbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .filterbar select{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;}
+</style>
+
+<div class="app">
+  <div class="topbar">
+    <h1>Automation Program Console</h1>
+    <div class="tabs" id="tabs"></div>
+    <div class="topbar-actions">
+      <input class="search" id="searchInput" placeholder="Search processes...">
+      <button class="btn btn-primary" id="newBtn">+ New process</button>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+const STATUS_LIST = ["Backlog","Discovery","Feasibility Review","Governance Decision","Approved - In Design","In Development","Testing/UAT","Production","Parked","Rejected","Retired"];
+const PRIORITY_LIST = ["High","Medium","Low"];
+const APPROACH_LIST = ["RPA","API Integration","AI/Document Understanding","Process Redesign","Reject/Park"];
+const SYSTEMS = ["SAP","Outlook","Excel","Web Portal","Database","SharePoint","Other"];
+const TABS = ["Dashboard","Board","Register","Systems"];
+
+const STATUS_COLOR = {
+  "Backlog":["#EAF1F8","#2E5C8A"],"Discovery":["#EAF1F8","#2E5C8A"],
+  "Feasibility Review":["#F1EAF8","#6A3D9A"],"Governance Decision":["#F1EAF8","#6A3D9A"],
+  "Approved - In Design":["#FBF0E1","#B36B00"],"In Development":["#FBF0E1","#B36B00"],
+  "Testing/UAT":["#FBF0E1","#B36B00"],"Production":["#E6F2ED","#1F7A5C"],
+  "Parked":["#EDEDED","#595959"],"Rejected":["#FBEAE8","#B23A2E"],"Retired":["#EDEDED","#595959"]
+};
+
+let state = { processes: [], activeTab: "Dashboard", search: "", loading: true, editing: null };
+
+function uid(){ return "p_" + Math.random().toString(36).slice(2,10); }
+function nextProcessId(){
+  const nums = state.processes.map(p => parseInt((p.processId||"").replace(/\D/g,""),10)).filter(n=>!isNaN(n));
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  return "AUT-" + String(next).padStart(3,"0");
+}
+
+function seedData(){
+  return [
+    { id: uid(), processId:"AUT-001", processName:"Invoice Matching - AP", department:"Finance", requestedBy:"Jane Doe",
+      status:"Production", priority:"High", approach:"RPA", systems:["SAP","Outlook","Excel"],
+      questionnaireRef:"PDQ-2026-014", feasibilityRef:"FA-2026-014", sddRef:"SDD-2026-014",
+      developer:"John Smith", businessOwner:"Jane Doe", dateSubmitted:"2026-03-10", dateApproved:"2026-03-24",
+      plannedGoLive:"2026-05-01", actualGoLive:"2026-05-04", estHours:480, actualHours:510,
+      notes:"Pilot process for the new intake framework." },
+    { id: uid(), processId:"AUT-002", processName:"Employee Onboarding Setup", department:"HR", requestedBy:"Priya Nair",
+      status:"In Development", priority:"Medium", approach:"RPA", systems:["SharePoint","Outlook","Database"],
+      questionnaireRef:"PDQ-2026-021", feasibilityRef:"FA-2026-021", sddRef:"SDD-2026-021",
+      developer:"Alex Chen", businessOwner:"Priya Nair", dateSubmitted:"2026-05-02", dateApproved:"2026-05-20",
+      plannedGoLive:"2026-09-01", actualGoLive:"", estHours:260, actualHours:"",
+      notes:"Waiting on AD access confirmation." },
+    { id: uid(), processId:"AUT-003", processName:"Vendor Statement Reconciliation", department:"Finance", requestedBy:"Marcus Bell",
+      status:"Feasibility Review", priority:"Medium", approach:"API Integration", systems:["SAP","Database"],
+      questionnaireRef:"PDQ-2026-030", feasibilityRef:"", sddRef:"",
+      developer:"", businessOwner:"Marcus Bell", dateSubmitted:"2026-07-02", dateApproved:"",
+      plannedGoLive:"", actualGoLive:"", estHours:150, actualHours:"",
+      notes:"SAP API confirmed available - candidate to skip RPA entirely." },
+    { id: uid(), processId:"AUT-004", processName:"Customer Refund Requests", department:"Customer Service", requestedBy:"Lina Cho",
+      status:"Backlog", priority:"Low", approach:"RPA", systems:["Web Portal","Excel"],
+      questionnaireRef:"", feasibilityRef:"", sddRef:"",
+      developer:"", businessOwner:"Lina Cho", dateSubmitted:"2026-07-20", dateApproved:"",
+      plannedGoLive:"", actualGoLive:"", estHours:90, actualHours:"",
+      notes:"" },
+  ];
+}
+
+async function loadData(){
+  try{
+    const res = await window.storage.get("processes-data", true);
+    state.processes = res && res.value ? JSON.parse(res.value) : [];
+    if(!state.processes.length){
+      state.processes = seedData();
+      await saveData();
+    }
+  }catch(e){
+    state.processes = seedData();
+    try{ await saveData(); }catch(e2){ console.error("Initial save failed", e2); }
+  }
+  state.loading = false;
+  render();
+}
+
+async function saveData(){
+  try{
+    await window.storage.set("processes-data", JSON.stringify(state.processes), true);
+  }catch(e){
+    showToast("Save failed - check your connection and try again.");
+  }
+}
+
+function showToast(msg){
+  const root = document.getElementById("toastRoot");
+  root.innerHTML = '<div class="toast">' + escapeHtml(msg) + '</div>';
+  setTimeout(()=>{ root.innerHTML = ""; }, 2200);
+}
+
+function escapeHtml(s){
+  return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function filteredProcesses(){
+  const q = state.search.trim().toLowerCase();
+  if(!q) return state.processes;
+  return state.processes.filter(p =>
+    (p.processId+" "+p.processName+" "+p.department+" "+p.developer+" "+p.businessOwner+" "+(p.systems||[]).join(" "))
+      .toLowerCase().includes(q)
+  );
+}
+
+function renderTabs(){
+  document.getElementById("tabs").innerHTML = TABS.map(t =>
+    '<button class="tab ' + (state.activeTab===t?"active":"") + '" data-tab="' + t + '">' + t + '</button>'
+  ).join("");
+  document.querySelectorAll(".tab").forEach(btn=>{
+    btn.onclick = () => { state.activeTab = btn.dataset.tab; render(); };
+  });
+}
+
+function render(){
+  renderTabs();
+  const content = document.getElementById("content");
+  if(state.loading){ content.innerHTML = '<div class="empty">Loading...</div>'; return; }
+  if(state.activeTab==="Dashboard") content.innerHTML = renderDashboard();
+  else if(state.activeTab==="Board") content.innerHTML = renderBoard();
+  else if(state.activeTab==="Register") content.innerHTML = renderRegister();
+  else if(state.activeTab==="Systems") content.innerHTML = renderSystems();
+  attachRowHandlers();
+}
+
+function renderDashboard(){
+  const all = state.processes;
+  const count = s => all.filter(p=>p.status===s).length;
+  const inProd = count("Production");
+  const inDev = count("In Development")+count("Testing/UAT")+count("Approved - In Design");
+  const awaiting = count("Backlog")+count("Discovery")+count("Feasibility Review")+count("Governance Decision");
+  const parked = count("Parked")+count("Rejected")+count("Retired");
+  const estSum = all.reduce((s,p)=>s+(Number(p.estHours)||0),0);
+  const actSum = all.reduce((s,p)=>s+(Number(p.actualHours)||0),0);
+
+  const maxStatus = Math.max(1, ...STATUS_LIST.map(s=>count(s)));
+  const statusBars = STATUS_LIST.map(s=>{
+    const c = count(s);
+    return '<div class="barrow"><div class="lbl">'+escapeHtml(s)+'</div><div class="track"><div class="fill" style="width:'+(c/maxStatus*100)+'%"></div></div><div class="count">'+c+'</div></div>';
+  }).join("");
+
+  const sysCounts = SYSTEMS.map(sys => all.filter(p=>(p.systems||[]).includes(sys)).length);
+  const maxSys = Math.max(1, ...sysCounts);
+  const sysBars = SYSTEMS.map((s,i)=>{
+    const c = sysCounts[i];
+    return '<div class="barrow"><div class="lbl">'+escapeHtml(s)+'</div><div class="track"><div class="fill" style="width:'+(c/maxSys*100)+'%"></div></div><div class="count">'+c+'</div></div>';
+  }).join("");
+
+  return ''
+    +'<div class="metrics">'
+      +'<div class="metric"><div class="num">'+all.length+'</div><div class="lbl">Total processes tracked</div></div>'
+      +'<div class="metric"><div class="num">'+inProd+'</div><div class="lbl">In production</div></div>'
+      +'<div class="metric"><div class="num">'+inDev+'</div><div class="lbl">In design / dev / testing</div></div>'
+      +'<div class="metric"><div class="num">'+awaiting+'</div><div class="lbl">Awaiting a decision</div></div>'
+      +'<div class="metric"><div class="num">'+parked+'</div><div class="lbl">Parked or rejected</div></div>'
+      +'<div class="metric"><div class="num">'+estSum.toLocaleString()+'</div><div class="lbl">Est. annual hours saved</div></div>'
+      +'<div class="metric"><div class="num">'+actSum.toLocaleString()+'</div><div class="lbl">Actual annual hours saved</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'
+      +'<div class="panel"><h3>Processes by status</h3>'+statusBars+'</div>'
+      +'<div class="panel"><h3>Processes by system</h3>'+sysBars+'</div>'
+    +'</div>';
+}
+
+function renderBoard(){
+  const list = filteredProcesses();
+  if(!list.length) return emptyState();
+  const columns = STATUS_LIST.map(status=>{
+    const items = list.filter(p=>p.status===status);
+    const cards = items.map(p=>{
+      const col = STATUS_COLOR[p.status] || ["#EDEDED","#595959"];
+      const sysTags = (p.systems||[]).slice(0,3).map(s=>'<span class="tag">'+escapeHtml(s)+'</span>').join("");
+      return '<div class="card" data-id="'+p.id+'">'
+        +'<div class="pid">'+escapeHtml(p.processId)+'</div>'
+        +'<div class="name">'+escapeHtml(p.processName||"Untitled process")+'</div>'
+        +'<div class="meta"><span class="badge badge-'+p.priority.toLowerCase()+'">'+escapeHtml(p.priority)+'</span>'+sysTags+'</div>'
+      +'</div>';
+    }).join("");
+    return '<div class="column"><div class="column-head"><span>'+escapeHtml(status)+'</span><span>'+items.length+'</span></div><div class="column-body">'+(cards||"")+'</div></div>';
+  }).join("");
+  return '<div class="board">'+columns+'</div>';
+}
+
+function renderRegister(){
+  const list = filteredProcesses();
+  if(!list.length) return emptyState();
+  const rows = list.map(p=>{
+    const col = STATUS_COLOR[p.status] || ["#EDEDED","#595959"];
+    return '<tr class="row" data-id="'+p.id+'">'
+      +'<td>'+escapeHtml(p.processId)+'</td>'
+      +'<td>'+escapeHtml(p.processName)+'</td>'
+      +'<td>'+escapeHtml(p.department)+'</td>'
+      +'<td><span class="status-pill" style="background:'+col[0]+';color:'+col[1]+'">'+escapeHtml(p.status)+'</span></td>'
+      +'<td>'+escapeHtml(p.priority)+'</td>'
+      +'<td>'+escapeHtml(p.approach)+'</td>'
+      +'<td>'+(p.systems||[]).map(s=>escapeHtml(s)).join(", ")+'</td>'
+      +'<td>'+escapeHtml(p.developer)+'</td>'
+      +'<td>'+escapeHtml(p.plannedGoLive)+'</td>'
+    +'</tr>';
+  }).join("");
+  return '<div class="table-wrap"><table><thead><tr>'
+    +'<th>ID</th><th>Process name</th><th>Department</th><th>Status</th><th>Priority</th><th>Approach</th><th>Systems</th><th>Developer</th><th>Planned go-live</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+function renderSystems(){
+  const list = filteredProcesses();
+  if(!list.length) return emptyState();
+  const rows = list.map(p=>{
+    const cells = SYSTEMS.map(s => '<td class="matrix-cell">'+((p.systems||[]).includes(s) ? '<span class="matrix-x">X</span>' : '')+'</td>').join("");
+    return '<tr class="row" data-id="'+p.id+'"><td>'+escapeHtml(p.processId)+'</td><td>'+escapeHtml(p.processName)+'</td>'+cells+'</tr>';
+  }).join("");
+  const totals = SYSTEMS.map(s => {
+    const c = list.filter(p=>(p.systems||[]).includes(s)).length;
+    return '<td class="matrix-cell" style="font-weight:700;color:var(--navy2);">'+c+'</td>';
+  }).join("");
+  return '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Process name</th>'
+    +SYSTEMS.map(s=>'<th>'+escapeHtml(s)+'</th>').join("")
+    +'</tr></thead><tbody>'+rows+'<tr><td></td><td style="font-weight:700;">Total using system</td>'+totals+'</tr></tbody></table></div>';
+}
+
+function emptyState(){
+  return '<div class="empty"><b>No processes match</b>Try a different search, or add a new process to get started.</div>';
+}
+
+function attachRowHandlers(){
+  document.querySelectorAll("[data-id]").forEach(el=>{
+    el.onclick = () => openModal(state.processes.find(p=>p.id===el.dataset.id));
+  });
+}
+
+function fieldHtml(label, name, value, type, opts){
+  opts = opts || {};
+  value = value==null ? "" : value;
+  if(type==="select"){
+    const options = opts.options.map(o=>'<option value="'+escapeHtml(o)+'" '+(o===value?"selected":"")+'>'+escapeHtml(o)+'</option>').join("");
+    return '<div class="field"><label>'+label+'</label><select data-field="'+name+'">'+options+'</select></div>';
+  }
+  if(type==="textarea"){
+    return '<div class="field full"><label>'+label+'</label><textarea data-field="'+name+'">'+escapeHtml(value)+'</textarea></div>';
+  }
+  return '<div class="field"><label>'+label+'</label><input data-field="'+name+'" type="'+type+'" value="'+escapeHtml(value)+'"></div>';
+}
+
+function openModal(process, isNew){
+  const p = process || {
+    id: uid(), processId: nextProcessId(), processName:"", department:"", requestedBy:"",
+    status:"Backlog", priority:"Medium", approach:"RPA", systems:[],
+    questionnaireRef:"", feasibilityRef:"", sddRef:"", developer:"", businessOwner:"",
+    dateSubmitted:"", dateApproved:"", plannedGoLive:"", actualGoLive:"", estHours:"", actualHours:"", notes:""
+  };
+  state.editing = p.id;
+  const isCreate = !process;
+
+  const sysChecks = SYSTEMS.map(s =>
+    '<label class="check"><input type="checkbox" value="'+s+'" '+((p.systems||[]).includes(s)?"checked":"")+'> '+s+'</label>'
+  ).join("");
+
+  const html = ''
+    +'<div class="overlay" id="overlay">'
+      +'<div class="modal">'
+        +'<div class="modal-head"><h2>'+(isCreate?"New process":escapeHtml(p.processName||"Edit process"))+'</h2><button class="x-close" id="closeModal">&times;</button></div>'
+        +'<div class="modal-body">'
+          +'<div class="field-row">'
+            + fieldHtml("Process ID","processId",p.processId,"text")
+            + fieldHtml("Process name","processName",p.processName,"text")
+          +'</div>'
+          +'<div class="field-row">'
+            + fieldHtml("Department","department",p.department,"text")
+            + fieldHtml("Requested by","requestedBy",p.requestedBy,"text")
+          +'</div>'
+          +'<div class="field-row">'
+            + fieldHtml("Status","status",p.status,"select",{options:STATUS_LIST})
+            + fieldHtml("Priority","priority",p.priority,"select",{options:PRIORITY_LIST})
+          +'</div>'
+          +'<div class="field-row">'
+            + fieldHtml("Automation approach","approach",p.approach,"select",{options:APPROACH_LIST})
+          +'</div>'
+          +'<div class="field full"><label>Systems involved</label><div class="checks">'+sysChecks+'</div></div>'
+          +'<div class="field-row">'
+            + fieldHtml("Questionnaire ref","questionnaireRef",p.questionnaireRef,"text")
+            + fieldHtml("Feasibility ref","feasibilityRef",p.feasibilityRef,"text")
+          +'</div>'
+          +'<div class="field-row">'
+            + fieldHtml("SDD ref","sddRef",p.sddRef,"text")
+            + fieldHtml("Developer","developer",p.developer,"text")
+          +'</div>'
+          +'<div class="field-row">'
+            + fieldHtml("Business owner","businessOwner",p.businessOwner,"text")
+            + fieldHtml("Date submitted","dateSubmitted",p.dateSubmitted,"date")
+          +'</div>'
+          +'<div class="field-row">'
+            + fieldHtml("Date approved","dateApproved",p.dateApproved,"date")
+            + fieldHtml("Planned go-live","plannedGoLive",p.plannedGoLive,"date")
+          +'</div>'
+          +'<div class="field-row">'
+            + fieldHtml("Actual go-live","actualGoLive",p.actualGoLive,"date")
+            + fieldHtml("Est. annual hours saved","estHours",p.estHours,"number")
+          +'</div>'
+          +'<div class="field-row">'
+            + fieldHtml("Actual annual hours saved","actualHours",p.actualHours,"number")
+          +'</div>'
+          + fieldHtml("Notes","notes",p.notes,"textarea")
+        +'</div>'
+        +'<div class="modal-foot">'
+          +'<div>'+(isCreate?'':'<button class="btn btn-danger" id="deleteBtn">Delete process</button>')+'</div>'
+          +'<div style="display:flex;gap:8px;">'
+            +'<button class="btn btn-ghost" id="cancelBtn">Cancel</button>'
+            +'<button class="btn btn-save" id="saveBtn">Save process</button>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  document.getElementById("modalRoot").innerHTML = html;
+  document.getElementById("closeModal").onclick = closeModal;
+  document.getElementById("cancelBtn").onclick = closeModal;
+  document.getElementById("overlay").onclick = (e)=>{ if(e.target.id==="overlay") closeModal(); };
+  if(!isCreate) document.getElementById("deleteBtn").onclick = () => handleDelete(p.id);
+  document.getElementById("saveBtn").onclick = () => handleSave(p.id, isCreate);
+}
+
+function closeModal(){
+  document.getElementById("modalRoot").innerHTML = "";
+  state.editing = null;
+}
+
+async function handleSave(id, isCreate){
+  const modal = document.getElementById("overlay");
+  const getVal = name => { const el = modal.querySelector('[data-field="'+name+'"]'); return el ? el.value : ""; };
+  const systems = Array.from(modal.querySelectorAll('.checks input:checked')).map(el=>el.value);
+
+  const updated = {
+    id, processId:getVal("processId"), processName:getVal("processName"), department:getVal("department"),
+    requestedBy:getVal("requestedBy"), status:getVal("status"), priority:getVal("priority"), approach:getVal("approach"),
+    systems, questionnaireRef:getVal("questionnaireRef"), feasibilityRef:getVal("feasibilityRef"), sddRef:getVal("sddRef"),
+    developer:getVal("developer"), businessOwner:getVal("businessOwner"), dateSubmitted:getVal("dateSubmitted"),
+    dateApproved:getVal("dateApproved"), plannedGoLive:getVal("plannedGoLive"), actualGoLive:getVal("actualGoLive"),
+    estHours:getVal("estHours"), actualHours:getVal("actualHours"), notes:getVal("notes")
+  };
+
+  if(!updated.processName.trim()){
+    showToast("Process name is required.");
+    return;
+  }
+
+  if(isCreate){
+    state.processes.push(updated);
+  }else{
+    const idx = state.processes.findIndex(p=>p.id===id);
+    if(idx>-1) state.processes[idx] = updated;
+  }
+  await saveData();
+  closeModal();
+  render();
+  showToast("Process saved.");
+}
+
+async function handleDelete(id){
+  state.processes = state.processes.filter(p=>p.id!==id);
+  await saveData();
+  closeModal();
+  render();
+  showToast("Process deleted.");
+}
+
+document.getElementById("newBtn").onclick = () => openModal(null, true);
+document.getElementById("searchInput").oninput = (e) => { state.search = e.target.value; render(); };
+
+loadData();
+</script>
